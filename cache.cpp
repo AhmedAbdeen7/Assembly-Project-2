@@ -15,7 +15,6 @@ struct line
 {
     int tag;
     int index;
-    int data;
 };
 
 struct cache
