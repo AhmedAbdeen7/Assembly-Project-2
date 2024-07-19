@@ -3,15 +3,13 @@
 #include <map>
 #include <math.h>
 #include <iomanip>
-#include <cstring> // for std::memcpy
 using namespace std;
 #define DBG 1
 #define DRAM_SIZE (64*1024*1024)
 #define CACHE_SIZE (64*1024)
-#define MAX_LINES (CACHE_SIZE/16)
 enum cacheResType {MISS=0, HIT=1};
 //set <int> fully_associative_cashe;
-map <unsigned int, char[16]> fully_associative_cache;
+map <unsigned int, int> fully_associative_cashe;
 /* The following implements a random number generator */
 unsigned int m_w = 0xABABAB55; /* must not be zero, nor 0x464fffff */
 unsigned int m_z = 0x05080902; /* must not be zero, nor 0x9068ffff */
@@ -64,76 +62,45 @@ cacheResType cacheSimFA(unsigned int addr)
 // This function accepts the memory address for the read and
 // returns whether it caused a cache miss or a cache hit
 // The current implementation assumes there is no cache; so, every transaction is a miss
-    cacheResType status = MISS;  
-    int n = log2(16);   
-    unsigned int addr_tag = addr >> n; //shift right to ignore the byte select bits
-    map <unsigned int, char[16]>::iterator itr;
-    for (itr = fully_associative_cache.begin(); itr != fully_associative_cache.end(); itr++)
-     {
-        if((itr->first>>1) == addr_tag)   //if tag matches 
-        {
-            if(itr->first & 0x1)   //if valid bit is 1
+    cacheResType status = MISS;
+    int n = log(32);
+    map <unsigned int, int>::iterator itr;
+    int addr_tag = addr >> n; //make it variable
+    for (itr = fully_associative_cashe.begin(); itr != fully_associative_cashe.end(); itr++) {
+        if((itr->first >> 4) == addr_tag) {
             status = HIT;
-
-            if(status==MISS)  //cold start
-            {
-                char value[16] = {0};
-                unsigned int key = (addr_tag<<1) + 0x1;
-                std::memcpy(fully_associative_cache[key], value, sizeof(value));
-
-            }
-            return status;   //will return miss if its a cold start and hit otherwise
+            return status;
         }
     }
-
-    if(fully_associative_cache.size()>=MAX_LINES)  //deletes a random line when cache is full and no hit
-    {
-    int random_index = rand_() % fully_associative_cache.size();
-
-    auto it = fully_associative_cache.begin();
-    std::advance(it, random_index);
-
-    // Display the element to be deleted
-   // std::cout << "Deleting key: " << it->first << std::endl;
-
-    // Erase the element
-    fully_associative_cache.erase(it);
-    }
-
-
-    char value[16] = {0};
-    unsigned int key = (addr_tag<<1) + 0x1;
-    std::memcpy(fully_associative_cache[key], value, sizeof(value));
     return status;
 }
 char *msg[2] = {"Miss","Hit"};
-#define NO_OF_Iterations 1000000// Change to 1,000,000 (was originally 100)
+#define NO_OF_Iterations 1000000 // Change to 1,000,000 (was originally 100)
 int main()
 {
     //set <int> fully_associative_cashe;
     unsigned int hit = 0;
     cacheResType r;
     unsigned int addr;
-    // cout << "Direct Mapped Cache Simulator\n";
-    // for(int inst=0;inst<NO_OF_Iterations;inst++)
-    // {
-    //     addr = memGen2();
-    //     r = cacheSimDM(addr);
-    //     if(r == HIT) hit++;
-    //     cout <<"0x" << setfill('0') << setw(8) << hex << addr <<" ("<< msg[r]
-    //          <<")\n";
-    // }
-    // cout << "Hit ratio = " << (100*hit/NO_OF_Iterations)<< endl;
-    // cout <<"-------------------------------\n" << endl;
+    cout << "Direct Mapped Cache Simulator\n";
+    for(int inst=0;inst<NO_OF_Iterations;inst++)
+    {
+        addr = memGen2();
+        r = cacheSimDM(addr);
+        if(r == HIT) hit++;
+        cout <<"0x" << setfill('0') << setw(8) << hex << addr <<" ("<< msg[r]
+             <<")\n";
+    }
+    cout << "Hit ratio = " << (100*hit/NO_OF_Iterations)<< endl;
+    cout <<"-------------------------------\n" << endl;
     cout << " Fully Associative Cache Simulator\n";
     for(int inst=0;inst<NO_OF_Iterations;inst++)
     {
-        addr = memGen1();
+        addr = memGen2();
         r = cacheSimFA(addr);
         if(r == HIT) hit++;
         cout <<"0x" << setfill('0') << setw(8) << hex << addr <<" ("<< msg[r]
              <<")\n";
     }
-    cout << "Hit ratio = " <<dec<<hit<< endl;
-
+    cout << "Hit ratio = " << (100*hit/NO_OF_Iterations)<< endl;
 }

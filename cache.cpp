@@ -15,12 +15,13 @@ struct line
 {
     int tag;
     int index;
+    int data;
 };
 
 struct cache
 {
 
-    vector<line> lines;
+    vector<vector<line>> lines;
 };
 
 cache C16, C32, C64, C128;
@@ -67,12 +68,12 @@ unsigned int memGen6()
 cacheResType cacheSimDM(unsigned int addr)
 {
     int number_of_lines = CACHE_SIZE / line_size;
-    int offset_bits = log2(line_size);
 
-    int index = (addr >> offset_bits);
-    int index_bits = log2(number_of_lines);
+    int index = (addr >> offset_bits
+    int index_size = log2(number_of_lines);
+    int offset = log2(line_size);
+    int tag = (addr >> (offset + index_size));
 
-    int tag = (addr >> (offset_bits + index_bits));
 
     // This function accepts the memory address for the memory transaction and
     // returns whether it caused a cache miss or a cache hit
@@ -81,48 +82,10 @@ cacheResType cacheSimDM(unsigned int addr)
     switch (line_size)
     {
     case 16:
-        if (C16.lines[index].tag == tag)
-        {
-            return HIT;
-        }
-        else
-        {
-            C16.lines[index].tag = tag;
-            return MISS;
-        }
-
-    case 32:
-        if (C32.lines[index].tag == tag)
-        {
-            return HIT;
-        }
-        else
-        {
-            C32.lines[index].tag = tag;
-            return MISS;
-        }
-
-    case 64:
-        if (C64.lines[index].tag == tag)
-        {
-            return HIT;
-        }
-        else
-        {
-            C64.lines[index].tag = tag;
-            return MISS;
-        }
-    case 128:
-        if (C128.lines[index].tag == tag)
-        {
-            return HIT;
-        }
-        else
-        {
-            C128.lines[index].tag = tag;
-            return MISS;
-        }
+        if (C.lines[index])
     }
+
+    if (C.lines)
 }
 // Fully Associative Cache Simulator
 cacheResType cacheSimFA(unsigned int addr)
