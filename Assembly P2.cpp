@@ -8,10 +8,11 @@ using namespace std;
 #define DBG 1
 #define DRAM_SIZE (64*1024*1024)
 #define CACHE_SIZE (64*1024)
-#define MAX_LINES (CACHE_SIZE/16)
+#define LINE_SIZE (32)
+#define MAX_LINES (CACHE_SIZE/LINE_SIZE)
 enum cacheResType {MISS=0, HIT=1};
 //set <int> fully_associative_cashe;
-map <unsigned int, char[16]> fully_associative_cache;
+map <unsigned int, char[32]> fully_associative_cache;
 /* The following implements a random number generator */
 unsigned int m_w = 0xABABAB55; /* must not be zero, nor 0x464fffff */
 unsigned int m_z = 0x05080902; /* must not be zero, nor 0x9068ffff */
@@ -65,9 +66,9 @@ cacheResType cacheSimFA(unsigned int addr)
 // returns whether it caused a cache miss or a cache hit
 // The current implementation assumes there is no cache; so, every transaction is a miss
     cacheResType status = MISS;  
-    int n = log2(16);   
+    int n = log2(LINE_SIZE);   
     unsigned int addr_tag = addr >> n; //shift right to ignore the byte select bits
-    map <unsigned int, char[16]>::iterator itr;
+    map <unsigned int, char[32]>::iterator itr;
     for (itr = fully_associative_cache.begin(); itr != fully_associative_cache.end(); itr++)
      {
         if((itr->first>>1) == addr_tag)   //if tag matches 
@@ -107,7 +108,7 @@ cacheResType cacheSimFA(unsigned int addr)
     return status;
 }
 char *msg[2] = {"Miss","Hit"};
-#define NO_OF_Iterations 1000000// Change to 1,000,000 (was originally 100)
+#define NO_OF_Iterations 100// Change to 1,000,000 (was originally 100)
 int main()
 {
     //set <int> fully_associative_cashe;
