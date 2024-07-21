@@ -48,18 +48,25 @@ unsigned int memGen1()
 {
     static unsigned int addr = 0;
     return (addr++) % (DRAM_SIZE);
+    static unsigned int addr = 0;
+    return (addr++) % (DRAM_SIZE);
 }
 unsigned int memGen2()
 {
+    static unsigned int addr = 0;
+    return rand_() % (24 * 1024);
     static unsigned int addr = 0;
     return rand_() % (24 * 1024);
 }
 unsigned int memGen3()
 {
     return rand_() % (DRAM_SIZE);
+    return rand_() % (DRAM_SIZE);
 }
 unsigned int memGen4()
 {
+    static unsigned int addr = 0;
+    return (addr++) % (4 * 1024);
     static unsigned int addr = 0;
     return (addr++) % (4 * 1024);
 }
@@ -67,9 +74,13 @@ unsigned int memGen5()
 {
     static unsigned int addr = 0;
     return (addr++) % (1024 * 64);
+    static unsigned int addr = 0;
+    return (addr++) % (1024 * 64);
 }
 unsigned int memGen6()
 {
+    static unsigned int addr = 0;
+    return (addr += 32) % (64 * 4 * 1024);
     static unsigned int addr = 0;
     return (addr += 32) % (64 * 4 * 1024);
 }
@@ -139,8 +150,72 @@ cacheResType cacheSimDM(unsigned int addr)
     // This function accepts the memory address for the memory transaction and
     // returns whether it caused a cache miss or a cache hit
     // The current implementation assumes there is no cache; so, every transaction is a miss
+    cacheResType status = MISS;
+    int offset_bits = log2(line_size);
+
+    int index_bits = log2(num_lines);
+
+    int index = (addr >> offset_bits) & ((1 << index_bits) - 1);
+
+    int tag = (addr >> (offset_bits + index_bits));
+
+    switch (line_size)
+    {
+        case 16:
+            if (Direct_Mapped_cache_16[index].valid == 1 && Direct_Mapped_cache_16[index].Tag == tag)
+            {
+                return HIT;
+            }
+            else
+            {
+                Direct_Mapped_cache_16[index].Tag = tag;
+                Direct_Mapped_cache_16[index].valid = true;
+
+                return MISS;
+            }
+            break;
+        case 32:
+            if (Direct_Mapped_cache_32[index].valid == 1 && Direct_Mapped_cache_32[index].Tag == tag)
+            {
+                return HIT;
+            }
+            else
+            {
+                Direct_Mapped_cache_32[index].Tag = tag;
+                Direct_Mapped_cache_32[index].valid = true;
+                return MISS;
+            }
+            break;
+        case 64:
+            if (Direct_Mapped_cache_64[index].valid == 1 && Direct_Mapped_cache_64[index].Tag == tag)
+            {
+                return HIT;
+            }
+            else
+            {
+                Direct_Mapped_cache_64[index].Tag = tag;
+                Direct_Mapped_cache_64[index].valid = true;
+                return MISS;
+            }
+            break;
+        case 128:
+            if (Direct_Mapped_cache_128[index].valid == 1 && Direct_Mapped_cache_128[index].Tag == tag)
+            {
+                return HIT;
+            }
+            else
+            {
+                Direct_Mapped_cache_128[index].Tag = tag;
+                Direct_Mapped_cache_128[index].valid = true;
+                return MISS;
+            }
+    }
+    // This function accepts the memory address for the memory transaction and
+    // returns whether it caused a cache miss or a cache hit
+    // The current implementation assumes there is no cache; so, every transaction is a miss
     return MISS;
 }
+
 
 cacheResType cacheSimFA(unsigned int addr)
 {
@@ -170,6 +245,7 @@ cacheResType cacheSimFA(unsigned int addr)
         }
     }
 
+    if(fully_associative_cache.size()>=num_lines)  //deletes a random line when cache is full and no hit
     if(fully_associative_cache.size()>=num_lines)  //deletes a random line when cache is full and no hit
     {
                 line x;

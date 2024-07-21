@@ -1,29 +1,18 @@
 #include <iostream>
+#include <set>
+#include <map>
+#include <math.h>
 #include <iomanip>
-#include <vector>
+#include <cstring> // for std::memcpy
 using namespace std;
 #define DBG 1
-#define DRAM_SIZE (64 * 1024 * 1024)
-#define CACHE_SIZE (64 * 1024)
-int line_size = 16;
-enum cacheResType
-{
-    MISS = 0,
-    HIT = 1
-};
-struct line
-{
-    int tag;
-    int index;
-};
-
-struct cache
-{
-
-    vector<line> lines;
-};
-
-cache C16, C32, C64, C128;
+#define DRAM_SIZE (64*1024*1024)
+#define CACHE_SIZE (64*1024)
+#define LINE_SIZE (32)
+#define MAX_LINES (CACHE_SIZE/LINE_SIZE)
+enum cacheResType {MISS=0, HIT=1};
+map <unsigned int, char[32]> fully_associative_cache;
+map <unsigned int, unsigned int> direct_mapped_cache;
 
 /* The following implements a random number generator */
 unsigned int m_w = 0xABABAB55; /* must not be zero, nor 0x464fffff */
@@ -36,118 +25,138 @@ unsigned int rand_()
 }
 unsigned int memGen1()
 {
-    static unsigned int addr = 0;
-    return (addr++) % (DRAM_SIZE);
+    static unsigned int addr=0;
+    return (addr++)%(DRAM_SIZE);
 }
 unsigned int memGen2()
 {
-    static unsigned int addr = 0; // Why use addr
-    return rand_() % (24 * 1024);
+    static unsigned int addr=0;
+    return rand_()%(24*1024);
 }
 unsigned int memGen3()
 {
-    return rand_() % (DRAM_SIZE);
+    return rand_()%(DRAM_SIZE);
 }
 unsigned int memGen4()
 {
-    static unsigned int addr = 0;
-    return (addr++) % (4 * 1024);
+    static unsigned int addr=0;
+    return (addr++)%(4*1024);
 }
 unsigned int memGen5()
 {
-    static unsigned int addr = 0;
-    return (addr++) % (1024 * 64);
+    static unsigned int addr=0;
+    return (addr++)%(1024*64);
 }
 unsigned int memGen6()
 {
-    static unsigned int addr = 0;
-    return (addr += 32) % (64 * 4 * 1024);
+    static unsigned int addr=0;
+    return (addr+=32)%(64*4*1024);
 }
 // Direct Mapped Cache Simulator
 cacheResType cacheSimDM(unsigned int addr)
 {
-    int number_of_lines = CACHE_SIZE / line_size;
-    int offset_bits = log2(line_size);
+// This function accepts the memory address for the read and
+// returns whether it caused a cache miss or a cache hit
+// The current implementation assumes there is no cache; so, every transaction is a miss
 
-    int index = (addr >> offset_bits);
-    int index_bits = log2(number_of_lines);
 
-    int tag = (addr >> (offset_bits + index_bits));
+    cacheResType status = MISS;  
+    // Determine the number of index bits
+    int n = std::log2(MAX_LINES);
+    
+    // Extract the index (shift right to ignore the byte select bits)
+    unsigned int index = (addr >> 0) & ((1 << n) - 1);
+    
+    // Extract the tag (remaining upper bits of the address)
+    unsigned int tag = addr >> n;
 
-    // This function accepts the memory address for the memory transaction and
-    // returns whether it caused a cache miss or a cache hit
-    // The current implementation assumes there is no cache; so, every
-    // transaction is a miss return MISS;
-    switch (line_size)
-    {
-    case 16:
-        if (C16.lines[index].tag == tag)
-        {
-            return HIT;
-        }
-        else
-        {
-            C16.lines[index].tag = tag;
-            return MISS;
-        }
-
-    case 32:
-        if (C32.lines[index].tag == tag)
-        {
-            return HIT;
-        }
-        else
-        {
-            C32.lines[index].tag = tag;
-            return MISS;
-        }
-
-    case 64:
-        if (C64.lines[index].tag == tag)
-        {
-            return HIT;
-        }
-        else
-        {
-            C64.lines[index].tag = tag;
-            return MISS;
-        }
-    case 128:
-        if (C128.lines[index].tag == tag)
-        {
-            return HIT;
-        }
-        else
-        {
-            C128.lines[index].tag = tag;
-            return MISS;
-        }
-    }
+    // Check if the tag matches the stored tag in the cache
+    if(direct_mapped_cache[index]== tag)
+        status = HIT;
+    else
+      {
+          direct_mapped_cache[index]=tag;
+          return status;
+      }
+   
+    return status;
 }
 // Fully Associative Cache Simulator
 cacheResType cacheSimFA(unsigned int addr)
 {
-    // This function accepts the memory address for the read and
-    // returns whether it caused a cache miss or a cache hit
-    // The current implementation assumes there is no cache; so, every
-    // transaction is a miss return MISS;
+// This function accepts the memory address for the read and
+// returns whether it caused a cache miss or a cache hit
+// The current implementation assumes there is no cache; so, every transaction is a miss
+    cacheResType status = MISS;  
+    int n = log2(LINE_SIZE);   
+    unsigned int addr_tag = addr >> n; //shift right to ignore the byte select bits
+    map <unsigned int, char[32]>::iterator itr;
+    for (itr = fully_associative_cache.begin(); itr != fully_associative_cache.end(); itr++)
+     {
+        if((itr->first>>1) == addr_tag)   //if tag matches 
+        {
+            if(itr->first & 0x1)   //if valid bit is 1
+            status = HIT;
+            if(status==MISS)  //cold start
+            {
+                char value[16] = {0};
+                unsigned int key = (addr_tag<<1) + 0x1;
+                std::memcpy(fully_associative_cache[key], value, sizeof(value));
+
+            }
+            return status;   //will return miss if its a cold start and hit otherwise
+        }
+    }
+
+    if(fully_associative_cache.size()>=MAX_LINES)  //deletes a random line when cache is full and no hit
+    {
+    int random_index = rand_() % fully_associative_cache.size();
+
+    auto it = fully_associative_cache.begin();
+    std::advance(it, random_index);
+
+    // Display the element to be deleted
+   // std::cout << "Deleting key: " << it->first << std::endl;
+
+    // Erase the element
+    fully_associative_cache.erase(it);
+    }
+
+
+    char value[16] = {0};
+    unsigned int key = (addr_tag<<1) + 0x1;
+    std::memcpy(fully_associative_cache[key], value, sizeof(value));
+    return status;
 }
-char *msg[2] = {"Miss", "Hit"};
-#define NO_OF_Iterations 1000000 // CHange to 1,000,000
+char *msg[2] = {"Miss","Hit"};
+#define NO_OF_Iterations 100// Change to 1,000,000 (was originally 100)
 int main()
 {
+    //set <int> fully_associative_cashe;
     unsigned int hit = 0;
     cacheResType r;
     unsigned int addr;
     cout << "Direct Mapped Cache Simulator\n";
-    for (int inst = 0; inst < NO_OF_Iterations; inst++)
+    for(int inst=0;inst<NO_OF_Iterations;inst++)
     {
-        addr = memGen2();
+        addr = memGen1();
         r = cacheSimDM(addr);
-        if (r == HIT)
-            hit++;
-        cout << "0x" << setfill('0') << setw(8) << hex << addr << " (" << msg[r]
-             << ")\n";
+        if(r == HIT) hit++;
+        cout <<"0x" << setfill('0') << setw(8) << hex << addr <<" ("<< msg[r]<<")\n";
     }
-    cout << "Hit ratio = " << (100 * hit / NO_OF_Iterations) << endl;
+    cout << "Hit ratio = " << dec<<hit<< endl;
+
+    hit = 0;
+    cout <<"-------------------------------\n" << endl;
+    cout << " Fully Associative Cache Simulator\n";
+    for(int inst=0;inst<NO_OF_Iterations;inst++)
+    {
+        addr = memGen1();
+        r = cacheSimFA(addr);
+        if(r == HIT) hit++;
+        cout <<"0x" << setfill('0') << setw(8) << hex << addr <<" ("<< msg[r]
+             <<")\n";
+    }
+    cout << "Hit ratio = " <<dec<<hit<< endl;
+
 }
