@@ -11,7 +11,7 @@ using namespace std;
 #define DRAM_SIZE (64 * 1024 * 1024)
 #define CACHE_SIZE (64 * 1024)
 
-int line_size = 64; 
+int line_size = 64; //refer to a Cache FA for a *potential* remark
 int num_lines = CACHE_SIZE / line_size;
 
 
@@ -89,6 +89,8 @@ cacheResType cacheSimDM(unsigned int addr)
     int index = (addr >> offset_bits) & ((1 << index_bits) - 1);
 
     int tag = (addr >> (offset_bits + index_bits));
+
+   // cout << endl << "Tag = " << tag << "  Index = " << index <<" Offset = "<<offset_bits<< " bits" << endl;
 
     switch (line_size)
     {
@@ -179,6 +181,7 @@ cacheResType cacheSimFA(unsigned int addr)
                 x.Tag=addr_tag;
                 x.valid=1;
                 int y = (rand_()%num_lines);
+             //   cout << endl << "Replacing Memory Line starting at " << fully_associative_cache[y].Tag << n << endl;
                 fully_associative_cache[y] = x;
                 return status;
 
@@ -198,9 +201,11 @@ char *msg[2] = {"Miss", "Hit"};
 int NO_OF_Iterations =1000000 ;// Change to 1,000,000 (was originally 100)
 int main(int argc, char* argv[])
 {
-    line_size= std::atoi(argv[1]);
-    int memsel = std::atoi(argv[2]);
-    NO_OF_Iterations = std::atoi(argv[3]);
+    int cachesel = std::atoi(argv[1]);
+    line_size= std::atoi(argv[2]);
+    int memsel = std::atoi(argv[3]);
+    NO_OF_Iterations = std::atoi(argv[4]);
+
     num_lines = CACHE_SIZE / line_size;
 
 
@@ -211,86 +216,95 @@ int main(int argc, char* argv[])
     unsigned int addr;
 
 
-
-      cout << "Direct Mapped Cache Simulator\n";
- for (int inst = 0; inst < NO_OF_Iterations; inst++)
+    if (cachesel == 1)
     {
-        switch (memsel)
+       // unsigned int arr[6] = {0x40,0x100040,0x41,0x100041,0x100042,0x42};
+        cout << "Direct Mapped Cache Simulator\n";
+        for (int inst = 0; inst < NO_OF_Iterations; inst++)
         {
+            switch (memsel)
+            {
             case 1:
-             addr = memGen1();
-             break;
+                addr = memGen1();
+                break;
 
             case 2:
-             addr = memGen2();
-             break;
+                addr = memGen2();
+                break;
 
             case 3:
-             addr = memGen3();
-             break;
+                addr = memGen3();
+                break;
 
             case 4:
-             addr = memGen4();
-             break;
+                addr = memGen4();
+                break;
 
             case 5:
-             addr = memGen5();
-             break;
+                addr = memGen5();
+                break;
             case 6:
-             addr = memGen6();
-             break;
-             default :
-             addr = memGen1();
+                addr = memGen6();
+                break;
+            default:
+                addr = memGen1();
 
+            }
+           // addr = arr[inst];
+            r = cacheSimDM(addr);
+            if (r == HIT) hit++;
+            cout << "0x" << setfill('0') << setw(8) << hex << addr << " (" << msg[r]
+                << ")\n";
         }
-          r = cacheSimDM(addr);
-          if(r == HIT) hit++;
-          cout <<"0x" << setfill('0') << setw(8) << hex << addr <<" ("<< msg[r]
-               <<")\n";
-      }
-     cout << "Hit ratio = " << dec << fixed << setprecision(6) << (100.0 * hit / NO_OF_Iterations) << endl;
+        cout << "Hit ratio = " << dec << fixed << setprecision(6) << (100.0 * hit / NO_OF_Iterations) << endl;
 
-     cout <<"-------------------------------\n" << endl;
-    cout << " Fully Associative Cache Simulator\n";
-    for (int inst = 0; inst < NO_OF_Iterations; inst++)
-    {
-        switch (memsel)
-        {
-            case 1:
-             addr = memGen1();
-             break;
 
-            case 2:
-             addr = memGen2();
-             break;
-
-            case 3:
-             addr = memGen3();
-             break;
-
-            case 4:
-             addr = memGen4();
-             break;
-
-            case 5:
-             addr = memGen5();
-             break;
-            case 6:
-             addr = memGen6();
-             break;
-             default :
-             addr = memGen1();
-
-        }
-        r = cacheSimFA(addr);
-        if (r == HIT)
-            hit2++;
-        cout << "0x" << setfill('0') << setw(8) << hex << addr << " (" << msg[r]
-             << ")\n";
     }
-    cout << "Hit ratio = " << dec << fixed << setprecision(6) << (100.0 * hit2 / NO_OF_Iterations) << endl;
 
-    cout << "Hit ratio DM= " << dec << fixed << setprecision(6) << (100.0 * hit / NO_OF_Iterations) << endl;
 
+    else
+    {
+
+        cout << "-------------------------------\n" << endl;
+        cout << " Fully Associative Cache Simulator\n";
+        for (int inst = 0; inst < NO_OF_Iterations; inst++)
+        {
+            switch (memsel)
+            {
+            case 1:
+                addr = memGen1();
+                break;
+
+            case 2:
+                addr = memGen2();
+                break;
+
+            case 3:
+                addr = memGen3();
+                break;
+
+            case 4:
+                addr = memGen4();
+                break;
+
+            case 5:
+                addr = memGen5();
+                break;
+            case 6:
+                addr = memGen6();
+                break;
+            default:
+                addr = memGen1();
+
+            }
+            r = cacheSimFA(addr);
+            if (r == HIT)
+                hit2++;
+            cout << "0x" << setfill('0') << setw(8) << hex << addr << " (" << msg[r]
+                << ")\n";
+        }
+        cout << "Hit ratio = " << dec << fixed << setprecision(6) << (100.0 * hit2 / NO_OF_Iterations) << endl;
+
+    }
 
 }
