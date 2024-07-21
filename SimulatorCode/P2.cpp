@@ -11,7 +11,7 @@ using namespace std;
 #define DRAM_SIZE (64 * 1024 * 1024)
 #define CACHE_SIZE (64 * 1024)
 
-int line_size = 64; //refer to a Cache FA for a *potential* remark
+int line_size = 64; 
 int num_lines = CACHE_SIZE / line_size;
 
 
