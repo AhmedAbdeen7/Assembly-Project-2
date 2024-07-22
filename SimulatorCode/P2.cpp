@@ -77,25 +77,27 @@ unsigned int memGen6()
 // Direct Mapped Cache Simulator
 cacheResType cacheSimDM(unsigned int addr)
 {
-    cacheResType status = MISS;
-    int offset_bits = log2(line_size);
+    cacheResType status = MISS; // Initializing the access state as Miss
+    int offset_bits = log2(line_size); // Caculating the number of offset bits to be used in index and tag calculation
 
-    int index_bits = log2(num_lines);
+    int index_bits = log2(num_lines); // Calculating the number of index bits to be used in index and tag calculation
 
-    int index = (addr >> offset_bits) & ((1 << index_bits) - 1);
+    int index = (addr >> offset_bits) & ((1 << index_bits) - 1); // Calculating the index using bit masking
 
-    int tag = (addr >> (offset_bits + index_bits));
+    int tag = (addr >> (offset_bits + index_bits)); // Calcuting the tag using shifting
 
    // cout << endl << "Tag = " << tag << "  Index = " << index <<" Offset = "<<offset_bits<< " bits" << endl;
 
-    switch (line_size)
+    switch (line_size) // Different cases for different line sizes
     {
         case 16:
-            if (Direct_Mapped_cache_16[index].valid == 1 && Direct_Mapped_cache_16[index].Tag == tag)
+            // If the tag is found in the index given and the vaild bit is one then we return a hit
+            if (Direct_Mapped_cache_16[index].valid == 1 && Direct_Mapped_cache_16[index].Tag == tag) 
             {
                 return HIT;
             }
-            else
+            // Otherwise the tag is copied into the index given and valid bit becomes true    
+            else  
             {
                 Direct_Mapped_cache_16[index].Tag = tag;
                 Direct_Mapped_cache_16[index].valid = true;
@@ -104,10 +106,12 @@ cacheResType cacheSimDM(unsigned int addr)
             }
             break;
         case 32:
+            // If the tag is found in the index given and the vaild bit is one then we return a hit
             if (Direct_Mapped_cache_32[index].valid == 1 && Direct_Mapped_cache_32[index].Tag == tag)
             {
                 return HIT;
             }
+                // Otherwise the tag is copied into the index given and valid bit becomes true
             else
             {
                 Direct_Mapped_cache_32[index].Tag = tag;
@@ -116,10 +120,12 @@ cacheResType cacheSimDM(unsigned int addr)
             }
             break;
         case 64:
+            // If the tag is found in the index given and the vaild bit is one then we return a hit
             if (Direct_Mapped_cache_64[index].valid == 1 && Direct_Mapped_cache_64[index].Tag == tag)
             {
                 return HIT;
             }
+                // Otherwise the tag is copied into the index given and valid bit becomes true
             else
             {
                 Direct_Mapped_cache_64[index].Tag = tag;
@@ -128,10 +134,12 @@ cacheResType cacheSimDM(unsigned int addr)
             }
             break;
         case 128:
+            // If the tag is found in the index given and the vaild bit is one then we return a hit
             if (Direct_Mapped_cache_128[index].valid == 1 && Direct_Mapped_cache_128[index].Tag == tag)
             {
                 return HIT;
             }
+                // Otherwise the tag is copied into the index given and valid bit becomes true
             else
             {
                 Direct_Mapped_cache_128[index].Tag = tag;
@@ -145,8 +153,8 @@ cacheResType cacheSimDM(unsigned int addr)
 cacheResType cacheSimFA(unsigned int addr)
 {
 
-    cacheResType status = MISS;
-    int n = log2(line_size);
+    cacheResType status = MISS; // Initializing the access state as Miss
+    int n = log2(line_size); 
     unsigned int addr_tag = addr >> n; //shift right to ignore the byte select bits
 
     for (int i=0;i<fully_associative_cache.size();i++)
@@ -211,13 +219,15 @@ int main(int argc, char* argv[])
     cacheResType r;
     unsigned int addr;
 
-
+    // choose the cache to simulate
     if (cachesel == 1)
     {
+        // choose the DM cache to simulate
        // unsigned int arr[6] = {0x40,0x100040,0x41,0x100041,0x100042,0x42};
         cout << "Direct Mapped Cache Simulator\n";
         for (int inst = 0; inst < NO_OF_Iterations; inst++)
         {
+            // choose the memory generating function
             switch (memsel)
             {
             case 1:
@@ -257,7 +267,7 @@ int main(int argc, char* argv[])
 
     }
 
-
+    // Choosing FA cache
     else
     {
 
@@ -265,6 +275,7 @@ int main(int argc, char* argv[])
         cout << " Fully Associative Cache Simulator\n";
         for (int inst = 0; inst < NO_OF_Iterations; inst++)
         {
+            // choose the memory generating function
             switch (memsel)
             {
             case 1:
