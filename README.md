@@ -1,9 +1,9 @@
 A project on simulating 2 types of caches namely FA cache and DM cache with varying line sizes and different memory access patterns.
 This project was done by
 Mostafa Gaafar, 900214463
-Ismael Sabet, 
+Ismaiel Sabet 900221277, 
 Ahmed Abdeen, 
-and Youssef Badawy. Who are all student in the American university in Cairo. This project was made in correspondance with the requirements for CSCE 2303 (computer organization and assembly).
+and Youssef Badawy, who are all students in the American university in Cairo. This project was made in correspondance with the requirements for CSCE 2303 (computer organization and assembly).
 
 There are 6 memory generation functions which each produce a different pattern of memory access, 
 you are advised to check the, before running in order to decide on your test cases. 
