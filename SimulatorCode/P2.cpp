@@ -1,7 +1,4 @@
 #include <iostream>
-#include <set>
-#include <map>
-#include<unordered_map>
 #include <vector>
 #include <math.h>
 #include <iomanip>
@@ -11,28 +8,27 @@ using namespace std;
 #define DRAM_SIZE (64 * 1024 * 1024)
 #define CACHE_SIZE (64 * 1024)
 
-int line_size = 64; //refer to a Cache FA for a *potential* remark
-int num_lines = CACHE_SIZE / line_size;
+int line_size = 64; // Line size used for different cache line sizes
+int num_lines = CACHE_SIZE / line_size; // Calculating the number of lines in the cache
 
 
-enum cacheResType
+enum cacheResType 
 {
     MISS = 0,
     HIT = 1
 };
-struct line
+struct line // A struct for each line containing the necessary values for a line (valid bit, data and tag) 
 {
     bool valid=0;
     unsigned int Tag=0;
     unsigned int data=0;
 };
 
-vector<line> fully_associative_cache;
-// set <int> fully_associative_cashe;
-vector<line> Direct_Mapped_cache_16(CACHE_SIZE / 16);
-vector<line> Direct_Mapped_cache_32(CACHE_SIZE / 32);
-vector<line> Direct_Mapped_cache_64(CACHE_SIZE / 64);
-vector<line> Direct_Mapped_cache_128(CACHE_SIZE / 128);
+vector<line> fully_associative_cache; // An FA cache
+vector<line> Direct_Mapped_cache_16(CACHE_SIZE / 16); // 16 byte DM cache
+vector<line> Direct_Mapped_cache_32(CACHE_SIZE / 32); // 32 byte DM cache 
+vector<line> Direct_Mapped_cache_64(CACHE_SIZE / 64); // 64 byte DM cache
+vector<line> Direct_Mapped_cache_128(CACHE_SIZE / 128); // 128 byte DM cache
 
 // unordered_map<unsigned int, char[16]> fully_associative_cache;
 /* The following implements a random number generator */
